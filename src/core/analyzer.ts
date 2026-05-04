@@ -32,16 +32,17 @@ export class TokenAnalyzer {
       const buyerCount = await this.getBuyerCount(token);
       const liquidity = this.calculateLiquidity(token);
 
-      // All criteria must be met
-      if (!this.meetsAllCriteria(volumeSpike, momentum, buyerCount, liquidity, token)) {
-        return null;
+      // Very loose criteria - just basic sanity checks
+      if (!token.liquidity.usd || token.liquidity.usd < 1000) {
+        return null; // Needs some liquidity
       }
 
       const score = this.calculateFinalScore(volumeSpike, momentum, buyerCount, liquidity);
 
+      // Even low scores are shown (helps find tokens)
       return {
         token,
-        score,
+        score: Math.max(score, 10), // Minimum score 10
         volumeSpike,
         momentum,
         buyerCount,
@@ -57,9 +58,11 @@ export class TokenAnalyzer {
     const currentVolume = token.volume.m5;
     const avgVolume = this.cache.getAverageVolume(token.baseToken.address, 60 * 60 * 1000);
 
-    if (avgVolume === 0) return 0;
-    const spike = currentVolume / avgVolume;
-    // Cap at 10x for scoring purposes
+    // If no historical data, use 24h volume as baseline
+    const baseline = avgVolume > 0 ? avgVolume : (token.volume.h24 / 24);
+    if (baseline === 0) return 1; // Default to 1x if no volume data
+
+    const spike = currentVolume / baseline;
     return Math.min(spike, 10);
   }
 
@@ -94,25 +97,6 @@ export class TokenAnalyzer {
     return liquidityScore;
   }
 
-  private meetsAllCriteria(
-    volumeSpike: number,
-    momentum: number,
-    buyerCount: number,
-    liquidity: number,
-    token: TokenPair
-  ): boolean {
-    // Lazított kritériumok - nagyobb catch
-    return (
-      // 1. Market cap >= $5k (volt $40k)
-      (token.marketCap || 0) >= 5000 &&
-      // 2. Volume spike >= 1.5x (volt 3x)
-      volumeSpike >= 1.5 &&
-      // 3. Positive momentum on 5m OR 15m (volt AND)
-      (momentum > 0 || token.priceChange.m5 > 0) &&
-      // 4. Liquidity >= $5k (volt $20k)
-      liquidity >= 5000
-    );
-  }
 
   private getBuySellRatio(token: TokenPair): number {
     if (!token.txns?.m5) return 1.0;
@@ -129,18 +113,18 @@ export class TokenAnalyzer {
     liquidity: number
   ): number {
     // Normalize metrics to 0-100
-    const volumeSpikeScore = Math.min((volumeSpike / 10) * 100, 100);
-    const momentumScore = momentum; // Already 0-100
-    const buyerScore = Math.min((buyerCount / 500) * 100, 100); // 500 buyers = max score
-    const liquidityScore = liquidity; // Already 0-100
+    const volumeSpikeScore = Math.min(Math.max(volumeSpike * 20, 0), 100);
+    const momentumScore = Math.max(Math.min(momentum, 100), 0);
+    const buyerScore = Math.min((buyerCount / 100) * 100, 100);
+    const liquidityScore = Math.min(Math.max(liquidity / 1000, 0), 100);
 
-    // Apply weights
+    // Apply weights - focus on volume spike
     const finalScore =
-      volumeSpikeScore * this.weights.volumeSpike +
-      momentumScore * this.weights.momentum +
-      buyerScore * this.weights.buyerCount +
-      liquidityScore * this.weights.liquidity;
+      volumeSpikeScore * 0.5 + // 50% volume
+      momentumScore * 0.25 + // 25% momentum
+      buyerScore * 0.15 + // 15% buyers
+      liquidityScore * 0.1; // 10% liquidity
 
-    return Math.round(Math.min(finalScore, 100));
+    return Math.round(Math.min(Math.max(finalScore, 5), 100));
   }
 }
