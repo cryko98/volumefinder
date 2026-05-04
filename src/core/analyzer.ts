@@ -101,21 +101,16 @@ export class TokenAnalyzer {
     liquidity: number,
     token: TokenPair
   ): boolean {
+    // Lazított kritériumok - nagyobb catch
     return (
-      // 1. Market cap >= $40k
-      (token.marketCap || 0) >= 40000 &&
-      // 2. Volume spike >= 3x
-      volumeSpike >= 3 &&
-      // 3. Positive momentum on 5m AND 15m
-      momentum > 0 &&
-      token.priceChange.m5 > 0 &&
-      token.priceChange.m15 > 0 &&
-      // 4. Buy/sell ratio > 1.2
-      this.getBuySellRatio(token) > 1.2 &&
-      // 5. At least 50 unique buyers
-      buyerCount >= 50 &&
-      // 6. Liquidity >= $20k
-      liquidity >= 20000
+      // 1. Market cap >= $5k (volt $40k)
+      (token.marketCap || 0) >= 5000 &&
+      // 2. Volume spike >= 1.5x (volt 3x)
+      volumeSpike >= 1.5 &&
+      // 3. Positive momentum on 5m OR 15m (volt AND)
+      (momentum > 0 || token.priceChange.m5 > 0) &&
+      // 4. Liquidity >= $5k (volt $20k)
+      liquidity >= 5000
     );
   }
 

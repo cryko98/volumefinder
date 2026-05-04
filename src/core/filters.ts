@@ -32,12 +32,12 @@ export class TokenFilter {
 
   static getDefaultConfig(): FilterConfig {
     return {
-      minMarketCap: 40000,
+      minMarketCap: 5000,
       maxMarketCap: 10000000,
-      minVolumeSpike: 3,
-      minLiquidity: 20000,
-      minScore: 70,
-      minBuyerCount: 50,
+      minVolumeSpike: 1.5,
+      minLiquidity: 5000,
+      minScore: 50,
+      minBuyerCount: 10,
       timeWindow: '5m',
       dexes: ['raydium', 'pumpswap', 'meteora'],
     };

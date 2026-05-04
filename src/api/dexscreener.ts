@@ -30,7 +30,7 @@ export const getTrendingTokens = async (): Promise<TokenPair[]> => {
       params: {
         order: 'volume_m5',
         chainId: 'solana',
-        limit: 50,
+        limit: 100,
       },
     });
 

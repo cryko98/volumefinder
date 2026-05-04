@@ -111,20 +111,39 @@ export function App() {
             {tokens.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 mb-4">
-                  {tokens.length === 0
-                    ? 'No tokens detected yet. Start the scanner to begin.'
-                    : 'Adjust filters to see more tokens.'}
+                  🔍 Scanning for trending tokens...
                 </p>
+                <p className="text-gray-600 text-sm">Start the scanner to begin monitoring. Usually finds tokens within 1-2 minutes.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {tokens.map((token) => (
-                  <TokenCard
-                    key={token.token.pairAddress}
-                    token={token}
-                    onDetailsClick={() => setSelectedToken(token.token)}
-                  />
-                ))}
+              <div className="space-y-6">
+                {/* Top Pick */}
+                {tokens[0] && (
+                  <div className="relative">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-solana-green/50 to-solana-purple/50 rounded-lg blur opacity-75"></div>
+                    <div className="relative bg-solana-card border-2 border-solana-green rounded-lg p-4">
+                      <div className="text-xs font-bold text-solana-green mb-2">🔥 TOP OPPORTUNITY</div>
+                      <TokenCard
+                        token={tokens[0]}
+                        onDetailsClick={() => setSelectedToken(tokens[0].token)}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Grid */}
+                <div>
+                  <h3 className="text-lg font-bold text-gray-300 mb-3">All Candidates ({tokens.length})</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {tokens.slice(1).map((token) => (
+                      <TokenCard
+                        key={token.token.pairAddress}
+                        token={token}
+                        onDetailsClick={() => setSelectedToken(token.token)}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>
